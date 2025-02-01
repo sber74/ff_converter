@@ -1,0 +1,14 @@
+{
+    "name": "ff_converter",
+    "version": "0.1",
+    "description": "Convertir un fichier quif issue de MsMoney en un fichier CSV pour impoter dans FireFly III",
+    "type": "module",
+    "author": "JefBlue",
+    "license": "MIT",
+    "scripts": {
+        "dev": "node main.js"
+    },
+    "dependencies": {
+        "dotenv": "^16.4.7"
+    }
+}
