@@ -41,6 +41,19 @@ function lineParse(line, idx) {
           if (value[0] === "[") {
             value = value.substring(1, value.length - 1);
             account.name = value;
+            switch (account.name.substring(0, 2)) {
+              case "FR":
+                account.symbol = "€";
+                break;
+              case "CA":
+                account.symbol = "$";
+                break;
+              case "US":
+                account.symbol = "$";
+                break;
+              default:
+                account.symbol = "";
+            }
           } else {
             console.log(`${idx} - key= ${key} - value= ${value}`);
             throw new Error("Impossible de déterminer le nom du compte");
@@ -160,7 +173,7 @@ function transformTrans(trans) {
 
     transCSV.date = trans.date;
     transCSV.amount = trans.amount;
-    transCSV.number = trans.number || "";
+    transCSV.number = trans.number ? "#" + trans.number : "";
     transCSV.note = trans.note || "";
     transCSV.categoryFF = trans.subcategory || ""; //TODO ajouter un tage pour appliquer une catégorie FF
     transCSV.from = account.name;
@@ -193,7 +206,17 @@ function transformTrans(trans) {
       if (trans?.listSplitTrans && trans.listSplitTrans.length > 0) {
         transCSV.split = "";
         trans.listSplitTrans.forEach((elt, idx) => {
-          const splittedTrans = "[#S" + (idx + 1) + "|" + elt.description + "|" + elt.category + "|" + elt.amount + "]";
+          const splittedTrans =
+            "[#S" +
+            (idx + 1) +
+            "|" +
+            elt.category +
+            "|" +
+            elt.amount +
+            account.symbol +
+            "|" +
+            (elt.description || "") +
+            "]";
           transCSV.split += splittedTrans;
         });
         //⚠️ A garder impérativement après la mise à jour de transCSV.description
@@ -243,6 +266,20 @@ function transformTrans(trans) {
   }
 }
 
+//#region TRANSFORM
+function writeCSV(listTransCSV) {
+  try {
+    let fileNameOut = process.env.DIR_OUT + process.env.FILE_NAME + process.env.EXT_OUT;
+    console.log(`Écriture du fichier ${fileNameOut}`);
+    fs.writeFileSync(fileNameOut, listTransCSV.join("\n"));
+
+    console.log(`Nombre de transactions CSV à traiter : ${listTransCSV.length}`);
+    /*listTransCSV.forEach((elt, idx) =>{});*/
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -284,10 +321,7 @@ try {
   listTrans.forEach((elt) => {
     listTransCSV.push(transformTrans(elt));
   });
-
-  const fileNameOut = process.env.DIR_OUT + process.env.FILE_NAME + process.env.EXT_OUT;
-  console.log(`Écriture du fichier ${fileNameOut}`);
-  fs.writeFileSync(fileNameOut, listTransCSV.join("\n"));
+  writeCSV(listTransCSV);
 
   console.log(`🏁🏁 Fin du programme avec succès - ${listTrans.length} transactions traitées`, account);
 } catch (error) {
